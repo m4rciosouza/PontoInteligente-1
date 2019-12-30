@@ -63,7 +63,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-contract-verifier</artifactId>
+			<artifactId>spring-cloud-starter-contract-verifier</artifactId>			
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -76,8 +76,7 @@
 				<version>${spring-cloud.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
-			</dependency>
-			
+			</dependency>			
 			
 			<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -182,15 +181,17 @@
 
 	<build>
 		<plugins>
+			
 			<plugin>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-contract-maven-plugin</artifactId>
-				
+				<version>${spring-cloud-contract.version}</version>	
 				<extensions>true</extensions>
 				<configuration>
 					<testFramework>JUNIT5</testFramework>
 				</configuration>
-			</plugin>
+			</plugin>			
+			
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
