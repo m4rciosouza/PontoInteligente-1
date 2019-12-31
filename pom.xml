@@ -18,7 +18,8 @@
 		<java.version>1.8</java.version>
 		<spring-cloud.version>Hoxton.SR1</spring-cloud.version>
 	</properties>
-<dependencies>
+
+	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-jersey</artifactId>
@@ -30,7 +31,6 @@
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-task</artifactId>
-			<version>2.2.2.RELEASE</version>
 		</dependency>
 
 		<dependency>
@@ -63,10 +63,12 @@
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-contract-verifier</artifactId>
-			<version>2.0.0.RELEASE</version>
 			<scope>test</scope>
-		</dependency>	
-		
+		</dependency>
+	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
@@ -173,7 +175,9 @@
 			<groupId>net.sf.ehcache</groupId>
 			<artifactId>ehcache</artifactId>
 		</dependency>		
-		</dependencies>			
+		</dependencies>		
+		
+	</dependencyManagement>
 
 	<build>
 		<plugins>
@@ -185,4 +189,3 @@
 	</build>
 
 </project>
-
