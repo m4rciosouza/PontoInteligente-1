@@ -7,7 +7,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
@@ -17,13 +16,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,15 +40,8 @@ import com.devprojets.pontoInteligente.api.services.LancamentoService;
 @ActiveProfiles("test")
 public class LancamentoControllerTest {
 
-	private MockMvc mvc;
-
 	@Autowired
-	private WebApplicationContext context;
-
-	@Before
-	public void setUp() {
-	mvc = MockMvcBuilders.webAppContextSetup(context).build();
-	}	
+	private MockMvc mvc;
 	
 	@MockBean
 	private LancamentoService lancamentoService;
@@ -63,15 +56,21 @@ public class LancamentoControllerTest {
 	private static final Date DATA = new Date();
 	
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+	private static String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
 	
 	@Test
 	@WithMockUser
 	public void testCadastrarLancamento() throws Exception {
+
 		Lancamento lancamento = obterDadosLancamento();
 		BDDMockito.given(this.funcionarioService.buscarPorId(Mockito.anyLong())).willReturn(Optional.of(new Funcionario()));
 		BDDMockito.given(this.lancamentoService.persistir(Mockito.any(Lancamento.class))).willReturn(lancamento);
 
+		CsrfToken csrfToken = getCsrfToken();
 		mvc.perform(MockMvcRequestBuilders.post(URL_BASE)
+				.sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+				.param(csrfToken.getParameterName(), csrfToken.getToken())
 				.content(this.obterJsonRequisicaoPost())
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON))
@@ -82,13 +81,16 @@ public class LancamentoControllerTest {
 				.andExpect(jsonPath("$.data.funcionarioId").value(ID_FUNCIONARIO))
 				.andExpect(jsonPath("$.errors").isEmpty());
 	}
-	
+
 	@Test
 	@WithMockUser
 	public void testCadastrarLancamentoFuncionarioIdInvalido() throws Exception {
 		BDDMockito.given(this.funcionarioService.buscarPorId(Mockito.anyLong())).willReturn(Optional.empty());
 
+		CsrfToken csrfToken = getCsrfToken();
 		mvc.perform(MockMvcRequestBuilders.post(URL_BASE)
+				.sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+				.param(csrfToken.getParameterName(), csrfToken.getToken())
 				.content(this.obterJsonRequisicaoPost())
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON))
@@ -102,19 +104,26 @@ public class LancamentoControllerTest {
 	public void testRemoverLancamento() throws Exception {
 		BDDMockito.given(this.lancamentoService.buscarPorId(Mockito.anyLong())).willReturn(Optional.of(new Lancamento()));
 
+		CsrfToken csrfToken = getCsrfToken();
 		mvc.perform(MockMvcRequestBuilders.delete(URL_BASE + ID_LANCAMENTO)
+				.sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+				.param(csrfToken.getParameterName(), csrfToken.getToken())
 				.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk());
 	}
 	
 	@Test
-	@WithMockUser
 	public void testRemoverLancamentoAcessoNegado() throws Exception {
 		BDDMockito.given(this.lancamentoService.buscarPorId(Mockito.anyLong())).willReturn(Optional.of(new Lancamento()));
 
 		mvc.perform(MockMvcRequestBuilders.delete(URL_BASE + ID_LANCAMENTO)
 				.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isForbidden());
+	}
+
+	private CsrfToken getCsrfToken() {
+		HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
+		return httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 	}
 
 	private String obterJsonRequisicaoPost() throws JsonProcessingException {
